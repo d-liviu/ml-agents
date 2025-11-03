@@ -50,12 +50,149 @@ def build_command(
 def ensure_dir(path: Path) -> None:
 	path.mkdir(parents=True, exist_ok=True)
 
+def extract_metrics_from_log(log_path: Path) -> dict:
+
+	metrics = {
+		"steps": [],
+		"mean_reward": [],
+		"std_reward": [],
+		"episode_length": [],
+		"learning_rate": [],
+		"entropy": [],
+		"value_loss": [],
+		"policy_loss": [],
+		"final_summary": {}
+	}
+	
+	if not log_path.exists():
+		return metrics
+	
+# Regex patterns for common ML-Agents metrics
+	step_pattern = re.compile(r"Step:\s*(\d+)")
+	mean_reward_pattern = re.compile(r"Mean Reward:\s*([-+]?\d*\.?\d+)")
+	std_reward_pattern = re.compile(r"Std of Reward:\s*([-+]?\d*\.?\d+)")
+	episode_length_pattern = re.compile(r"Mean Episode Length:\s*([-+]?\d*\.?\d+)")
+	lr_pattern = re.compile(r"Learning Rate:\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)")
+	entropy_pattern = re.compile(r"Entropy:\s*([-+]?\d*\.?\d+)")
+	value_loss_pattern = re.compile(r"Value Loss:\s*([-+]?\d*\.?\d+)")
+	policy_loss_pattern = re.compile(r"Policy Loss:\s*([-+]?\d*\.?\d+)")
+	
+	try:
+		with open(log_path, "r", encoding="utf-8") as f:
+			current_step = None
+			
+			for line in f:
+				# Extract step number
+				step_match = step_pattern.search(line)
+				if step_match:
+					current_step = int(step_match.group(1))
+					metrics["steps"].append(current_step)
+				
+				# Extract mean reward
+				mean_reward_match = mean_reward_pattern.search(line)
+				if mean_reward_match and current_step is not None:
+					metrics["mean_reward"].append({
+						"step": current_step,
+						"value": float(mean_reward_match.group(1))
+					})
+				
+				# Extract std reward
+				std_reward_match = std_reward_pattern.search(line)
+				if std_reward_match and current_step is not None:
+					metrics["std_reward"].append({
+						"step": current_step,
+						"value": float(std_reward_match.group(1))
+					})
+				
+				# Extract episode length
+				ep_len_match = episode_length_pattern.search(line)
+				if ep_len_match and current_step is not None:
+					metrics["episode_length"].append({
+						"step": current_step,
+						"value": float(ep_len_match.group(1))
+					})
+				
+				# Extract learning rate
+				lr_match = lr_pattern.search(line)
+				if lr_match and current_step is not None:
+					metrics["learning_rate"].append({
+						"step": current_step,
+						"value": float(lr_match.group(1))
+					})
+				
+				# Extract entropy
+				entropy_match = entropy_pattern.search(line)
+				if entropy_match and current_step is not None:
+					metrics["entropy"].append({
+						"step": current_step,
+						"value": float(entropy_match.group(1))
+					})
+				
+				# Extract value loss
+				value_loss_match = value_loss_pattern.search(line)
+				if value_loss_match and current_step is not None:
+					metrics["value_loss"].append({
+						"step": current_step,
+						"value": float(value_loss_match.group(1))
+					})
+				
+				# Extract policy loss
+				policy_loss_match = policy_loss_pattern.search(line)
+				if policy_loss_match and current_step is not None:
+					metrics["policy_loss"].append({
+						"step": current_step,
+						"value": float(policy_loss_match.group(1))
+					})
+		
+		# Calculate summary statistics
+		if metrics["mean_reward"]:
+			rewards = [m["value"] for m in metrics["mean_reward"]]
+			metrics["final_summary"] = {
+				"total_steps": metrics["steps"][-1] if metrics["steps"] else 0,
+				"final_mean_reward": rewards[-1] if rewards else None,
+				"max_reward": max(rewards) if rewards else None,
+				"min_reward": min(rewards) if rewards else None,
+				"avg_reward": sum(rewards) / len(rewards) if rewards else None,
+			}
+	
+	except Exception as e:
+		print(f"Warning: Error parsing log file: {e}", file=sys.stderr)
+	
+	return metrics
+
+# saves metrics in 
+def save_metrics(metrics: dict, output_path: Path) -> None:
+	try:
+		with open(output_path, "w", encoding="utf-8") as f:
+			json.dump(metrics, f, indent=2)
+		print(f"Metrics saved to: {output_path}")
+	except Exception as e:
+		print(f"Warning: Could not save metrics: {e}", file=sys.stderr)
+
+# helper for terminal print
+def print_metrics_summary(metrics: dict) -> None:
+	summary = metrics.get("final_summary", {})
+	if not summary:
+		print("\nNo metrics extracted from log.")
+		return
+	
+	print("\n" + "="*50)
+	print("TRAINING METRICS SUMMARY")
+	print("="*50)
+	print(f"Total Steps:       {summary.get('total_steps', 'N/A')}")
+	print(f"Final Mean Reward: {summary.get('final_mean_reward', 'N/A'):.4f}" if summary.get('final_mean_reward') is not None else "Final Mean Reward:  N/A")
+	print(f"Max Reward:        {summary.get('max_reward', 'N/A'):.4f}" if summary.get('max_reward') is not None else "Max Reward:         N/A")
+	print(f"Min Reward:        {summary.get('min_reward', 'N/A'):.4f}" if summary.get('min_reward') is not None else "Min Reward:         N/A")
+	print(f"Avg Reward:        {summary.get('avg_reward', 'N/A'):.4f}" if summary.get('avg_reward') is not None else "Avg Reward:         N/A")
+	print(f"Data Points:       {len(metrics.get('mean_reward', []))}")
+	print("="*50 + "\n")
+
 
 def main(argv: list[str]) -> int:
 	# Define and parse CLI arguments for this wrapper
 	parser = argparse.ArgumentParser(
 		description=(
-			"Launch ML-Agents training with configurable run-id, structured logs, and error handling."
+			"Launch ML-Agents training with configurable run-id, structured logs, error handling and metric extraction"
 		)
 	)
 	parser.add_argument(
@@ -118,6 +255,18 @@ def main(argv: list[str]) -> int:
 		help="Merge stderr into stdout log (single file)",
 	)
 	parser.add_argument(
+		"--extract-metrics",
+		action="store_true",
+		help="Extract metrics from log after training completes",
+	)
+	parser.add_argument(
+		"--metrics-output",
+		dest="metrics_output",
+		type=Path,
+		default=None,
+		help="Path to save extracted metrics JSON (defaults to logs-dir/RUN_ID.metrics.json)",
+	)
+	parser.add_argument(
 		"extra",
 		nargs=argparse.REMAINDER,
 		help=(
@@ -142,6 +291,7 @@ def main(argv: list[str]) -> int:
 	# Define log file paths
 	stdout_log = args.logs_dir / f"{run_id}.out.log"
 	stderr_log = stdout_log if args.merge_stderr else args.logs_dir / f"{run_id}.err.log"
+	metrics_output = args.metrics_output or args.logs_dir / f"{run_id}.metrics.json"
 
 	# Build the final training command
 	cmd = build_command(
@@ -161,6 +311,8 @@ def main(argv: list[str]) -> int:
 		print(f"  env:          {args.env_path}")
 	print(f"  logs:         {stdout_log} ({'merged' if args.merge_stderr else 'split stderr'})")
 	print(f"  results dir:  {args.results_dir}")
+	if args.extract_metrics:
+		print(f"  metrics out:  {metrics_output}")
 	print(f"  command:      {shlex.join(cmd)}")
 
 	# Optional: just show the command and exit
@@ -204,6 +356,11 @@ def main(argv: list[str]) -> int:
 	# Report final outcome and return the child's exit code
 	if exit_code == 0:
 		print(f"Training completed successfully. Logs: {stdout_log}")
+		if args.extract_metrics:
+			print("\nExtracting metrics from training log...")
+			metrics = extract_metrics_from_log(stdout_log)
+			save_metrics(metrics, metrics_output)
+			print_metrics_summary(metrics)
 	else:
 		print(
 			f"Training exited with code {exit_code}. See logs: {stdout_log}{'' if args.merge_stderr else f' and {stderr_log}'}",
