@@ -1,12 +1,14 @@
 # Utility to launch ML-Agents training with configurable run-id, logs, and error handling.
 
 import argparse
+import csv
 import datetime
 import os
 import re
 import shlex
 import subprocess
 import sys
+from collections import OrderedDict
 from pathlib import Path
 
 # "Cleans" the provided run-id so it's safe for files and the command line
@@ -160,12 +162,55 @@ def extract_metrics_from_log(log_path: Path) -> dict:
 	
 	return metrics
 
-# saves metrics in 
+# saves metrics to CSV files
 def save_metrics(metrics: dict, output_path: Path) -> None:
 	try:
-		with open(output_path, "w", encoding="utf-8") as f:
-			json.dump(metrics, f, indent=2)
+		fieldnames = [
+			"step",
+			"mean_reward",
+			"std_reward",
+			"episode_length",
+			"learning_rate",
+			"entropy",
+			"value_loss",
+			"policy_loss",
+		]
+
+		rows: "OrderedDict[int, dict[str, float | int]]" = OrderedDict()
+
+		for step in metrics.get("steps", []):
+			rows.setdefault(step, {"step": step})
+
+		def fill_metric(key: str) -> None:
+			for entry in metrics.get(key, []):
+				step = entry.get("step")
+				if step is None:
+					continue
+				row = rows.setdefault(step, {"step": step})
+				row[key] = entry.get("value")
+
+		for metric_key in fieldnames[1:]:
+			fill_metric(metric_key)
+
+		ensure_dir(output_path.parent)
+
+		with open(output_path, "w", encoding="utf-8", newline="") as csv_file:
+			writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+			writer.writeheader()
+			for row in rows.values():
+				writer.writerow({field: row.get(field, "") for field in fieldnames})
+
 		print(f"Metrics saved to: {output_path}")
+
+		summary = metrics.get("final_summary") or {}
+		if summary:
+			summary_path = output_path.with_name(f"{output_path.stem}.summary.csv")
+			with open(summary_path, "w", encoding="utf-8", newline="") as csv_file:
+				writer = csv.writer(csv_file)
+				writer.writerow(["metric", "value"])
+				for key, value in summary.items():
+					writer.writerow([key, value if value is not None else ""])
+			print(f"Summary saved to: {summary_path}")
 	except Exception as e:
 		print(f"Warning: Could not save metrics: {e}", file=sys.stderr)
 
@@ -264,7 +309,7 @@ def main(argv: list[str]) -> int:
 		dest="metrics_output",
 		type=Path,
 		default=None,
-		help="Path to save extracted metrics JSON (defaults to logs-dir/RUN_ID.metrics.json)",
+		help="Path to save extracted metrics CSV (defaults to logs-dir/RUN_ID.metrics.csv)",
 	)
 	parser.add_argument(
 		"extra",
@@ -291,7 +336,7 @@ def main(argv: list[str]) -> int:
 	# Define log file paths
 	stdout_log = args.logs_dir / f"{run_id}.out.log"
 	stderr_log = stdout_log if args.merge_stderr else args.logs_dir / f"{run_id}.err.log"
-	metrics_output = args.metrics_output or args.logs_dir / f"{run_id}.metrics.json"
+	metrics_output = args.metrics_output or args.logs_dir / f"{run_id}.metrics.csv"
 
 	# Build the final training command
 	cmd = build_command(
@@ -371,3 +416,6 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
 	sys.exit(main(sys.argv[1:])) 
+
+	# To run the wrapper with mlagents-learn
+	# python utils\launch_training.py --run-id worm-editor --extract-metrics config\ppo\Worm.yaml
