@@ -87,7 +87,7 @@ ml-agents/
 
 ```bash
 # Install the main ML-Agents package
-pip install mlagents==1.0.0
+pip install mlagents==1.1.0
 
 # This automatically installs mlagents_envs as a dependency
 ```
