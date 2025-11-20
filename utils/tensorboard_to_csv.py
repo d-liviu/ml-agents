@@ -3,6 +3,7 @@ import glob
 import json
 import traceback
 import pandas as pd
+import numpy as np
 from pathlib import Path
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
@@ -133,14 +134,10 @@ def tflog2pandas(path):
         episodic_reward_mean = sum(episodic_rewards) / len(episodic_rewards) if episodic_rewards else None
         
         # Calculate steps_to_threshold (steps when reward first exceeds a threshold)
-        steps_to_threshold = None
-        if episodic_rewards and final_perf:
-            threshold = final_perf   
-            for i, reward in enumerate(episodic_rewards):
-                if reward >= threshold:
-                    steps_to_threshold = steps[i] if i < len(steps) else None
-                    break
-        
+        steps_to_threshold = steps_to_flattening(steps,episodic_rewards,window=10,min_rel_improve=0.05, need_consecutive=1)
+        # higher need_consecutive provides more "relaxed" threshold, 
+        # by needing more windows to be under min_rel_improvement
+
         row_data = {
             "run_id": run_id,
             "wallclock_seconds_total": wallclock_seconds,
@@ -179,6 +176,60 @@ def tflog2pandas(path):
         runlog_data = pd.DataFrame(columns=data_file_cols)
     
     return runlog_data
+
+def steps_to_flattening(steps, rewards, window=10, min_rel_improve=0.05, need_consecutive=1):
+    """
+    Calculate steps until training flattens (relative improvement falls below threshold).
+    
+    Training is considered flattened when mean reward's relative improvement
+    over consecutive windows falls below the specified percentage.
+    """
+    # check if data are enough
+    if not steps or not rewards or len(rewards) < 2 * window:
+        return None 
+
+    steps_array = np.asarray(steps)
+    rewards_array = np.asarray(rewards, dtype=float)
+
+    # calc windows #
+    num_windows = len(rewards_array) // window
+    if num_windows < 2:
+        return None
+
+    # calc the means of all th windows
+    window_means = []
+    window_end_steps = []
+    for window_idx in range(num_windows):
+        start_idx, end_idx = window_idx * window, (window_idx + 1) * window
+        mean_reward = rewards_array[start_idx:end_idx].mean()
+        window_means.append(mean_reward)
+        end_step_idx = min(end_idx, len(steps_array)) - 1
+        window_end_steps.append(int(steps_array[end_step_idx]))
+
+    # determine which windows are under/over the threshold
+    is_below_threshold = []
+    for window_idx in range(1, len(window_means)):
+        previous_mean, current_mean = window_means[window_idx - 1],  window_means[window_idx]
+        denominator = max(abs(previous_mean), 0.00000008) # 0.00000008 as epsilon
+        relative_improvement = (current_mean - previous_mean) / denominator
+        is_below_threshold.append(relative_improvement < min_rel_improve)
+
+    # two modes depedning of the level of robusteness
+    if need_consecutive <= 1:
+        for window_idx, below_threshold in enumerate(is_below_threshold, start=1):
+            if below_threshold:
+                return window_end_steps[window_idx]
+        return None
+    else:
+        consecutive_count = 0
+        for window_idx, below_threshold in enumerate(is_below_threshold, start=1):
+            if below_threshold:
+                consecutive_count += 1
+                if consecutive_count == need_consecutive:
+                    return window_end_steps[window_idx]
+            else:
+                consecutive_count = 0
+        return None
 
 
 # Example usage
