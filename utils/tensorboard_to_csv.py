@@ -42,7 +42,7 @@ def tflog2pandas(path):
         except Exception as e:
             print(f"Warning: Could not read configuration.yaml: {e}")
     
-    # Find timers.json for wallclock time
+    # find timers.json for wallclock time
     timers_path = path / "run_logs" / "timers.json"
     wallclock_seconds = None
     if timers_path.exists():
@@ -59,7 +59,7 @@ def tflog2pandas(path):
         except Exception as e:
             print(f"Warning: Could not read timers.json: {e}")
     
-    # Extract system information 
+    # extract system information 
     cpu_cores = None
     ram_gb = None
 
@@ -69,14 +69,14 @@ def tflog2pandas(path):
     else:
         cpu_cores = os.cpu_count()       
     
-    # Extract hyperparameters from config
+    # extract hyperparameters from config
     learning_rate = None
     batch_size = None
     nn_arch_depth = None
     algo_name = None
     env_name = None
     
-    # Get behavior name (usually first key in behaviors)
+    # get behavior name (usually first key in behaviors)
     behaviors = config_data.get("behaviors", {})
     if behaviors:
         behavior_name = list(behaviors.keys())[0]
@@ -97,13 +97,13 @@ def tflog2pandas(path):
     
     run_id = path.name
     
-    # Extract metrics from events file
+    # extract metrics from events file
     try:
         event_acc = EventAccumulator(events_file_path, size_guidance={"scalars": 0})
         event_acc.Reload()
         tags = event_acc.Tags().get("scalars", [])
         
-        # Find episodic reward tag (common names: Environment/Cumulative Reward, Policy/Extrinsic Reward)
+        #find episodic reward tag (common names: Environment/Cumulative Reward, Policy/Extrinsic Reward)
         episodic_reward_tag = None
         for tag in tags:
             if "Cumulative Reward" in tag:
@@ -135,7 +135,7 @@ def tflog2pandas(path):
         # Calculate steps_to_threshold (steps when reward first exceeds a threshold)
         steps_to_threshold = None
         if episodic_rewards and final_perf:
-            threshold = final_perf * 0.8  
+            threshold = final_perf   
             for i, reward in enumerate(episodic_rewards):
                 if reward >= threshold:
                     steps_to_threshold = steps[i] if i < len(steps) else None
@@ -183,7 +183,8 @@ def tflog2pandas(path):
 
 # Example usage
 if __name__ == "__main__":
-    df = tflog2pandas("results/first3DBallRun2")
+    path ="results/first3DBallRun2"
+    df = tflog2pandas(path)
     if not df.empty:
         df.to_csv("output.csv", index=False)
         print(f"Extracted data:\n{df}")
