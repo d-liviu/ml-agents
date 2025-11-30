@@ -181,6 +181,7 @@ def tflog2pandas(path):
             "final_perf",
             "steps_to_threshold",
             "episodic_reward_mean",
+            "plateau_reward"
         ]
         runlog_data = pd.DataFrame(columns=data_file_cols)
     
