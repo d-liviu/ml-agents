@@ -1,0 +1,2 @@
+run_id,wallclock_seconds_total,algo_name,env_name,learning_rate,batch_size,nn_arch_depth,cpu_cores_logical,ram_total_gb,final_perf,steps_to_threshold,episodic_reward_mean,plateau_reward
+worm_highcapacity_r1,6724.0,ppo,Worm,0.0003,2024,4,20,23.71471405029297,906.6604614257812,,499.2579781645072,939.0479
