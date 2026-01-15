@@ -2,6 +2,14 @@
 
 This document provides example commands to test the `compute_slope_comparison.py` script using the example config files.
 
+- `--old-configs` : relative path to old config file
+- `--new-configs` : relative path to new config file \
+- `--results-dir` : relative path to results directory \
+- `--old-csv-dir` : relative path to old csv directory \
+- `--new-csv-dir` : relative path to new csv directory \
+- `--delta` 0.1 (we use a 10% under delta, can vary) \
+- `--output` : name & path of output file
+
 ## Example Config Files Created
 
 - You can either use .txt or .csv files
@@ -18,6 +26,25 @@ This document provides example commands to test the `compute_slope_comparison.py
 - `example_new_worm_configs.txt` - Text file with new Worm run IDs (Worm6-10)
 - `example_old_worm_configs.csv` - CSV file with old Worm run IDs
 - `example_new_worm_configs.csv` - CSV file with new Worm run IDs
+
+## Creating Your Own Config Files
+
+You can create your own config files in two formats:
+
+### Text File Format (one run_id per line):
+```
+Pyramids1
+Pyramids2
+Pyramids3
+```
+
+### CSV File Format (with run_id column):
+```csv
+run_id
+Pyramids1
+Pyramids2
+Pyramids3
+```
 
 ## Example Commands
 
@@ -36,7 +63,7 @@ python utils/compute_slope_comparison.py \
     --results-dir results \
     --old-csv-dir pyramids_csvs \
     --new-csv-dir pyramids_csvs \
-    --tolerance 0.1 \
+    --delta 0.1 \
     --output pyramids_comparison_results.csv
 ```
 
@@ -46,7 +73,7 @@ python utils/compute_slope_comparison.py \
     --old-configs utils/example_old_worm_configs.txt \
     --new-configs utils/example_new_worm_configs.txt \
     --results-dir results \
-    --tolerance 0.1 \
+    --delta 0.1 \
     --output worm_comparison_results.csv
 ```
 
@@ -58,16 +85,16 @@ python utils/compute_slope_comparison.py \
     --results-dir results \
     --old-csv-dir worm_csvs \
     --new-csv-dir worm_csvs \
-    --tolerance 0.1 \
+    --delta 0.1 \
     --output worm_comparison_results.csv
 ```
 
-### Example 5: Custom Tolerance (15% instead of 10%)
+### Example 5: Custom delta (15% instead of 10%)
 ```bash
 python utils/compute_slope_comparison.py \
     --old-configs utils/example_old_pyramids_configs.txt \
     --new-configs utils/example_new_pyramids_configs.txt \
-    --tolerance 0.15 \
+    --delta 0.15 \
     --output pyramids_comparison_15pct.csv
 ```
 
@@ -88,25 +115,7 @@ python utils/compute_slope_comparison.py \
 The script will:
 1. Process old configs and compute mean slope and performance
 2. Process new configs and compute their slopes and performances
-3. Compare new configs against old config means (with tolerance)
+3. Compare new configs against old config means (with delta)
 4. Show which new configs pass/fail the comparison
 5. Save detailed results to CSV if `--output` is specified
 
-## Creating Your Own Config Files
-
-You can create your own config files in two formats:
-
-### Text File Format (one run_id per line):
-```
-Pyramids1
-Pyramids2
-Pyramids3
-```
-
-### CSV File Format (with run_id column):
-```csv
-run_id
-Pyramids1
-Pyramids2
-Pyramids3
-```
