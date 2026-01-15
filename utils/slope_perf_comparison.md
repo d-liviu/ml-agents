@@ -113,9 +113,9 @@ python utils/compute_slope_comparison.py \
 ## Expected Output
 
 The script will:
-1. Process old configs and compute mean slope and performance
+1. Process old configs and compute the lowest slope that reaches the threshold and mean performance
 2. Process new configs and compute their slopes and performances
-3. Compare new configs against old config means (with delta)
-4. Show which new configs pass/fail the comparison
+3. Compare new configs against old config slope and mean performance (with delta)
+4. Show which new configs pass/fail the comparison (must pass both slope and perforance comparison)
 5. Save detailed results to CSV if `--output` is specified
 
