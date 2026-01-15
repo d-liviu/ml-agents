@@ -4,7 +4,8 @@ This document provides example commands to test the `compute_slope_comparison.py
 
 ## Example Config Files Created
 
-The following example config files have been created in the `utils/` directory:
+- You can either use .txt or .csv files
+- The following example config files have been created in the `comparison_examples/` directory:
 
 ### Pyramids Environment:
 - `example_old_pyramids_configs.txt` - Text file with old Pyramids run IDs (Pyramids1-5)
