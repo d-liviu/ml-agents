@@ -123,7 +123,7 @@ def get_performance_at_step(steps, rewards, target_step):
         return float(interpolated_reward)
 
 
-def compute_slope(steps, rewards, target_step, window_size=100000):
+def compute_slope(steps, rewards, target_step):
     """
     Compute the slope of the training curve around a target step.
     Uses a window around the target step to compute linear regression slope.
@@ -131,8 +131,7 @@ def compute_slope(steps, rewards, target_step, window_size=100000):
     Args:
         steps: array of step values
         rewards: array of reward values
-        target_step: step at which to compute slope
-        window_size: size of window around target_step to use for slope computation
+        target_step: step at which training finishes
     
     Returns:
         slope value or None if computation fails
@@ -140,32 +139,17 @@ def compute_slope(steps, rewards, target_step, window_size=100000):
     if steps is None or rewards is None or len(steps) == 0:
         return None
     
-    #Find indices within window around target_step
-    lower_bound = max(0, target_step - window_size // 2)
-    upper_bound = target_step + window_size // 2
-    
-    #Get data points within the window
-    mask = (steps >= lower_bound) & (steps <= upper_bound)
-    window_steps = steps[mask]
-    window_rewards = rewards[mask]
-    
-    if len(window_steps) < 2:
-        #Not enough data points, try to use all available data up to target_step
-        mask = steps <= target_step
-        window_steps = steps[mask]
-        window_rewards = rewards[mask]
-    
-    if len(window_steps) < 2:
+    if len(steps) < 2:
         return None
     
     # Compute linear regression slope
     try:
         if HAS_SCIPY:
-            slope, intercept, r_value, p_value, std_err = stats.linregress(window_steps, window_rewards)
+            slope, _, _, _, _ = stats.linregress(steps, rewards)
             return float(slope)
         else:
             # Use numpy polyfit as fallback
-            coeffs = np.polyfit(window_steps, window_rewards, 1)
+            coeffs = np.polyfit(steps, rewards, 1)
             return float(coeffs[0])  # coeffs[0] is the slope
     except Exception as e:
         print(f"Error computing slope: {e}")
@@ -395,7 +379,7 @@ def compare_configs(old_configs_file, new_configs_file, results_dir,
                   performance >= (1 - delta) * mean_performance) if mean_performance is not None else None
         
         # Overall pass if both criteria are met
-        passes = (slope_ok is True and perf_ok is True) if (slope_ok is not None and perf_ok is not None) else None
+        passes = (slope_ok and perf_ok ) if (slope_ok is not None and perf_ok is not None) else None
         
         comparison_results.append({
             'run_id': row['run_id'],
@@ -457,4 +441,3 @@ if __name__ == "__main__":
     if args.output and not comparison_df.empty:
         comparison_df.to_csv(args.output, index=False)
         print(f"\nComparison results saved to {args.output}")
-        
