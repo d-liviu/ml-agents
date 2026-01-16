@@ -1,0 +1,65 @@
+{
+    "Worm": {
+        "checkpoints": [
+            {
+                "steps": 3499000,
+                "file_path": "results\\worm_highcapacity_r2\\Worm\\Worm-3499000.onnx",
+                "reward": 636.9236675061678,
+                "creation_time": 1763572641.6322634,
+                "auxillary_file_paths": [
+                    "results\\worm_highcapacity_r2\\Worm\\Worm-3499000.pt"
+                ]
+            },
+            {
+                "steps": 3999000,
+                "file_path": "results\\worm_highcapacity_r2\\Worm\\Worm-3999000.onnx",
+                "reward": 688.0872192382812,
+                "creation_time": 1763573335.883535,
+                "auxillary_file_paths": [
+                    "results\\worm_highcapacity_r2\\Worm\\Worm-3999000.pt"
+                ]
+            },
+            {
+                "steps": 4499000,
+                "file_path": "results\\worm_highcapacity_r2\\Worm\\Worm-4499000.onnx",
+                "reward": 750.9084535796067,
+                "creation_time": 1763574000.1709557,
+                "auxillary_file_paths": [
+                    "results\\worm_highcapacity_r2\\Worm\\Worm-4499000.pt"
+                ]
+            },
+            {
+                "steps": 4999000,
+                "file_path": "results\\worm_highcapacity_r2\\Worm\\Worm-4999000.onnx",
+                "reward": 784.9220324064556,
+                "creation_time": 1763574694.219937,
+                "auxillary_file_paths": [
+                    "results\\worm_highcapacity_r2\\Worm\\Worm-4999000.pt"
+                ]
+            },
+            {
+                "steps": 5010000,
+                "file_path": "results\\worm_highcapacity_r2\\Worm\\Worm-5010000.onnx",
+                "reward": 781.4888061523437,
+                "creation_time": 1763574702.219344,
+                "auxillary_file_paths": [
+                    "results\\worm_highcapacity_r2\\Worm\\Worm-5010000.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 5010000,
+            "file_path": "results\\worm_highcapacity_r2\\Worm.onnx",
+            "reward": 781.4888061523437,
+            "creation_time": 1763574702.219344,
+            "auxillary_file_paths": [
+                "results\\worm_highcapacity_r2\\Worm\\Worm-5010000.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.1.2+cpu"
+    }
+}

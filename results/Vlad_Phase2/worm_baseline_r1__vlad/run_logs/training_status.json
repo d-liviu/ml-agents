@@ -1,0 +1,65 @@
+{
+    "Worm": {
+        "checkpoints": [
+            {
+                "steps": 3499000,
+                "file_path": "results\\worm_baseline_r1\\Worm\\Worm-3499000.onnx",
+                "reward": 681.0494352641858,
+                "creation_time": 1763506851.138319,
+                "auxillary_file_paths": [
+                    "results\\worm_baseline_r1\\Worm\\Worm-3499000.pt"
+                ]
+            },
+            {
+                "steps": 3999000,
+                "file_path": "results\\worm_baseline_r1\\Worm\\Worm-3999000.onnx",
+                "reward": 746.9813978407118,
+                "creation_time": 1763507252.8120615,
+                "auxillary_file_paths": [
+                    "results\\worm_baseline_r1\\Worm\\Worm-3999000.pt"
+                ]
+            },
+            {
+                "steps": 4499000,
+                "file_path": "results\\worm_baseline_r1\\Worm\\Worm-4499000.onnx",
+                "reward": 806.1952493601832,
+                "creation_time": 1763507635.204338,
+                "auxillary_file_paths": [
+                    "results\\worm_baseline_r1\\Worm\\Worm-4499000.pt"
+                ]
+            },
+            {
+                "steps": 4999000,
+                "file_path": "results\\worm_baseline_r1\\Worm\\Worm-4999000.onnx",
+                "reward": 825.2108668277139,
+                "creation_time": 1763508016.9578886,
+                "auxillary_file_paths": [
+                    "results\\worm_baseline_r1\\Worm\\Worm-4999000.pt"
+                ]
+            },
+            {
+                "steps": 5010000,
+                "file_path": "results\\worm_baseline_r1\\Worm\\Worm-5010000.onnx",
+                "reward": 827.9950236002604,
+                "creation_time": 1763508023.115982,
+                "auxillary_file_paths": [
+                    "results\\worm_baseline_r1\\Worm\\Worm-5010000.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 5010000,
+            "file_path": "results\\worm_baseline_r1\\Worm.onnx",
+            "reward": 827.9950236002604,
+            "creation_time": 1763508023.115982,
+            "auxillary_file_paths": [
+                "results\\worm_baseline_r1\\Worm\\Worm-5010000.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.1.2+cpu"
+    }
+}
