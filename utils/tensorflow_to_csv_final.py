@@ -229,9 +229,38 @@ def steps_to_flattening(steps, rewards, window=10, min_rel_improve=0.05):
     return None, None
 
 if __name__ == "__main__":
-    df = tflog2pandas("results/Pyramids")
-    if not df.empty:
-        df.to_csv("baseline1.csv", index=False)
-        print(f"Extracted data:\n{df}")
-    else:
-        print("No data extracted")
+
+    RUN_IDS = [
+        "Worm1",
+        "Worm2",
+        "Worm3",
+        "Worm4",
+        "Worm5",
+        "Worm6",
+        "Worm7",
+        "Worm8",
+        "Worm9",
+        "Worm10",
+    ]
+
+    RESULTS_DIR = Path("results")
+    OUTPUT_DIR = Path("phase3_csvs/worm")
+
+    print(f"Starting batch processing for {len(RUN_IDS)} runs...")
+
+    for run_id in RUN_IDS:
+        folder_path = RESULTS_DIR / run_id
+        
+        print(f"Processing: {run_id}...", end=" ")
+        
+        df = tflog2pandas(folder_path)
+        if not df.empty:
+            output_file = OUTPUT_DIR / f"{run_id}.csv"
+            df.to_csv(output_file, index=False)
+            print(f"Done with {run_id}! Saved to {output_file}")
+        else:
+            print(f"Failed. No data found for {run_id}")
+
+print("\nAll tasks completed.")
+
+
