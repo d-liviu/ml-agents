@@ -2,6 +2,13 @@ import pandas as pd
 from pathlib import Path
 import argparse
 
+'''
+example : python filter_configs.py 
+        --input-dir "results/pyramid_csvs" : directory containg the csvs with the calculated slope and mean performance for each run
+        --output-file "passed/successful_runs.csv"  : file to write the configs that passed the threshold (with delta 10%)
+        --env "pyramids"
+'''
+
 #### CHANGE THIS DEPENDING ON THE ENV
 TARGET_SLOPE_PYRAMIDS = 0.0000006118641212960709 
 TARGET_SLOPE_WORM = 0.00019152558179100633 
