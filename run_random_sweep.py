@@ -23,7 +23,7 @@ def choose_behavior_name(cfg: dict, explicit: str | None) -> str:
     behaviors = cfg.get("behaviors", {})
     if not behaviors:
         raise ValueError("Base YAML has no top-level 'behaviors:' section.")
-    # If there's exactly one behavior, use it; otherwise just take the first key.
+    
     return next(iter(behaviors.keys()))
 
 
@@ -42,21 +42,17 @@ def apply_overrides(cfg: dict, behavior_name: str, overrides: dict) -> None:
     hp = b["hyperparameters"]
     net = b["network_settings"]
 
-    # Trainer budget
     if "max_steps" in overrides:
         b["max_steps"] = int(overrides["max_steps"])
 
-    # Hyperparameters
     for k in ["learning_rate", "batch_size", "buffer_size", "beta"]:
         if k in overrides:
             hp[k] = overrides[k]
 
-    # Network settings
     for k in ["hidden_units", "num_layers"]:
         if k in overrides:
             net[k] = overrides[k]
 
-    # Optional: keep schedules stable (you can comment these out if you prefer)
     hp.setdefault("learning_rate_schedule", "linear")
     hp.setdefault("beta_schedule", "constant")
 
@@ -68,7 +64,7 @@ def sample_hparams(rng: random.Random) -> dict:
     """
     batch_size = rng.choice([64, 128, 256, 512, 1024, 2048, 4096])
     buffer_mult = rng.choice([10, 20, 40])
-    buffer_size = batch_size * buffer_mult  # buffer_size must be >= batch_size
+    buffer_size = batch_size * buffer_mult
 
     lr = loguniform(rng, 1e-5, 1e-3)
     beta = loguniform(rng, 1e-4, 1e-2)
@@ -125,19 +121,16 @@ def main():
     ensure_sections(base_cfg)
     behavior_name = choose_behavior_name(base_cfg, args.behavior)
 
-    # Decide which indices to generate/run
     start = args.start_index
     total = args.n_configs if args.count is None else min(args.n_configs, start + args.count)
     indices = list(range(start, total))
 
     manifest_path = out_dir / "manifest.jsonl"
 
-    # For reproducibility: seed the sweep generator
     sweep_rng = random.Random(12345)
 
     with manifest_path.open("a", encoding="utf-8") as mf:
         for i in indices:
-            # Make a deterministic RNG per config index (so teammates can generate the same configs)
             cfg_rng = random.Random((12345 << 16) + i)
             sampled = sample_hparams(cfg_rng)
 
@@ -148,8 +141,7 @@ def main():
                 if args.max_steps is not None:
                     overrides["max_steps"] = args.max_steps
 
-                # Put seed into env_settings (supported by ML-Agents config format) :contentReference[oaicite:8]{index=8}
-                cfg.setdefault("env_settings", {})
+            
                 cfg["env_settings"]["seed"] = int(seed)
 
                 apply_overrides(cfg, behavior_name, overrides)
@@ -190,7 +182,6 @@ def main():
                     print(f"Run failed (continuing): {run_id}\n{e}")
                     continue
 
-                # Archive config + meta into the results folder for the run
                 results_dir = Path("results") / run_id
                 if results_dir.exists():
                     shutil.copy2(cfg_path, results_dir / "used_config.yaml")
