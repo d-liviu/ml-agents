@@ -1,0 +1,65 @@
+{
+    "Worm": {
+        "checkpoints": [
+            {
+                "steps": 3499000,
+                "file_path": "results\\worm_stablelearn_r1\\Worm\\Worm-3499000.onnx",
+                "reward": 459.6083971918846,
+                "creation_time": 1763551967.652391,
+                "auxillary_file_paths": [
+                    "results\\worm_stablelearn_r1\\Worm\\Worm-3499000.pt"
+                ]
+            },
+            {
+                "steps": 3999000,
+                "file_path": "results\\worm_stablelearn_r1\\Worm\\Worm-3999000.onnx",
+                "reward": 520.4529636928013,
+                "creation_time": 1763552357.0138092,
+                "auxillary_file_paths": [
+                    "results\\worm_stablelearn_r1\\Worm\\Worm-3999000.pt"
+                ]
+            },
+            {
+                "steps": 4499000,
+                "file_path": "results\\worm_stablelearn_r1\\Worm\\Worm-4499000.onnx",
+                "reward": 571.0346673459422,
+                "creation_time": 1763552738.83654,
+                "auxillary_file_paths": [
+                    "results\\worm_stablelearn_r1\\Worm\\Worm-4499000.pt"
+                ]
+            },
+            {
+                "steps": 4999000,
+                "file_path": "results\\worm_stablelearn_r1\\Worm\\Worm-4999000.onnx",
+                "reward": 608.9370789819834,
+                "creation_time": 1763553122.138793,
+                "auxillary_file_paths": [
+                    "results\\worm_stablelearn_r1\\Worm\\Worm-4999000.pt"
+                ]
+            },
+            {
+                "steps": 5010000,
+                "file_path": "results\\worm_stablelearn_r1\\Worm\\Worm-5010000.onnx",
+                "reward": 616.2623657226562,
+                "creation_time": 1763553136.1019316,
+                "auxillary_file_paths": [
+                    "results\\worm_stablelearn_r1\\Worm\\Worm-5010000.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 5010000,
+            "file_path": "results\\worm_stablelearn_r1\\Worm.onnx",
+            "reward": 616.2623657226562,
+            "creation_time": 1763553136.1019316,
+            "auxillary_file_paths": [
+                "results\\worm_stablelearn_r1\\Worm\\Worm-5010000.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.1.2+cpu"
+    }
+}
