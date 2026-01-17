@@ -2,14 +2,6 @@ import pandas as pd
 from pathlib import Path
 import argparse
 
-'''
-example : python filter_configs.py 
-        --input-dir "results/pyramid_csvs" : directory containg the csvs with the calculated slope and mean performance for each run
-        --output-file "passed/successful_runs.csv"  : file to write the configs that passed the threshold (with delta 10%)
-        --env "pyramids"
-'''
-
-#### CHANGE THIS DEPENDING ON THE ENV
 TARGET_SLOPE_PYRAMIDS = 0.0000006118641212960709 
 TARGET_SLOPE_WORM = 0.00019152558179100633 
 TARGET_PERFORMANCE_PYRAMIDS = -0.43691815845208415 
@@ -19,15 +11,16 @@ DELTA = 0.1
 def filter_by_manual_values(input_dir, output_file, env):
     input_path = Path(input_dir)
     output_path = Path(output_file)
-    # Ensure output directory exists
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if env.lower() == "worm":
         slope_target = TARGET_SLOPE_WORM
         perf_target = TARGET_PERFORMANCE_WORM
-    else:
+    elif env.lower() == "pyramids":
         slope_target = TARGET_SLOPE_PYRAMIDS
         perf_target = TARGET_PERFORMANCE_PYRAMIDS
+    else:
+        raise ValueError("Invalid environment. Please choose 'pyramids' or 'worm'.")
 
     passed_runs = []
 
@@ -38,12 +31,11 @@ def filter_by_manual_values(input_dir, output_file, env):
         try:
             df = pd.read_csv(csv_file)
             
-            # Assumes the CSV has 'lowest_slope' and 'mean_performance' columns
+            # the csv must have 'lowest_slope' and 'mean_performance' columns
             if 'lowest_slope' in df.columns and 'mean_performance' in df.columns:
                 run_slope = df['lowest_slope'].iloc[0]
                 run_perf = df['mean_performance'].iloc[0]
 
-                # 3. Apply Comparison Logic
                 if run_slope > slope_target * (1-DELTA) and run_perf > perf_target * (1-DELTA):
                     passed_runs.append({
                         'run_id': csv_file.stem,
@@ -52,7 +44,6 @@ def filter_by_manual_values(input_dir, output_file, env):
                     })
                     print(f"KEEP: {csv_file.stem} (S: {run_slope:.6f}, P: {run_perf:.2f})")
                 else:
-                    # Optional: print why it failed
                     reason = "Slope" if run_slope <= slope_target else "Perf"
                     print(f"DROP: {csv_file.stem} (Failed on {reason})")
             else:

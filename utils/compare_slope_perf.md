@@ -14,6 +14,13 @@ This script evaluates individual training run CSVs against baseline performance 
 - **Detailed Logging**: Reports which runs pass/fail and why
 - **Safe Output**: Creates output directories automatically
 
+## Installation
+
+### Required Dependencies
+```bash
+pip install pandas
+```
+
 ## Usage
 
 ### Basic Command
@@ -30,7 +37,7 @@ python filter_configs.py \
 |----------|----------|---------|-------------|
 | `--input-dir` | Yes | - | Directory containing individual run CSV files |
 | `--output-file` | Yes | - | Path for output CSV (including filename) |
-| `--env` | No | `pyramids` | Environment type: `pyramids` or `worm` |
+| `--env` | No | - | Environment type: `pyramids` or `worm` |
 
 ## Baseline Thresholds
 

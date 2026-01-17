@@ -4,7 +4,7 @@ A Python script for computing baseline performance metrics from reinforcement le
 
 ## Overview
 
-This script analyzes training data from multiple RL configurations to establish baseline performance metrics. It extracts training curves from TensorBoard logs, computes slopes and performance values, and identifies successful configurations based on threshold criteria.
+This script analyzes training data from multiple RL configurations to establish performance metrics. It extracts training curves from TensorBoard logs, computes slopes and performance values, and identifies successful configurations based on threshold criteria.
 
 ## Features
 

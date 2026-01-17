@@ -6,17 +6,6 @@ import pandas as pd
 from pathlib import Path
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
-""""
-Script 1: Calculate baseline metrics (slope and mean performance)
-
-To execute:
-    python utils/compute_slope_perf.py \
-        --configs path/to/configs/files/name.csv \
-        --results-dir results \
-        --csv-dir pyramids_csvs \
-        --output baseline_metrics.json
-"""
-
 try:
     from scipy import stats
     HAS_SCIPY = True
@@ -91,12 +80,11 @@ def extract_training_data(path):
 def get_performance_at_step(steps, rewards, target_step):
     """
     Get performance (reward) at a specific step.
-    If exact step doesn't exist, interpolate between nearest steps.
+    If exact step doesn't exist, search between nearest steps.
     """
     if steps is None or rewards is None or len(steps) == 0:
         return None
     
-    # Find the index where target_step would be inserted
     idx = np.searchsorted(steps, target_step)
     
     if idx == 0:
@@ -104,16 +92,13 @@ def get_performance_at_step(steps, rewards, target_step):
     elif idx >= len(steps):
         return float(rewards[-1])
     elif steps[idx] == target_step:
-        #match
         return float(rewards[idx])
     else:
-        # Interpolate between idx-1 and idx
         step_before = steps[idx - 1]
         step_after = steps[idx]
         reward_before = rewards[idx - 1]
         reward_after = rewards[idx]
         
-        # Linear interpolation
         if step_after == step_before:
             return float(reward_before)
         
@@ -125,14 +110,6 @@ def get_performance_at_step(steps, rewards, target_step):
 def compute_slope(steps, rewards):
     """
     Compute the slope of the training curve around a target step.
-    Uses a window around the target step to compute linear regression slope.
-    
-    Args:
-        steps: array of step values
-        rewards: array of reward values
-    
-    Returns:
-        slope value or None if computation fails
     """
     if steps is None or rewards is None or len(steps) == 0:
         return None
@@ -140,15 +117,13 @@ def compute_slope(steps, rewards):
     if len(steps) < 2:
         return None
     
-    # Compute linear regression slope
     try:
         if HAS_SCIPY:
             slope, _, _, _, _ = stats.linregress(steps, rewards)
             return float(slope)
         else:
-            # Use numpy polyfit as fallback
             coeffs = np.polyfit(steps, rewards, 1)
-            return float(coeffs[0])  # coeffs[0] is the slope
+            return float(coeffs[0]) 
     except Exception as e:
         print(f"Error computing slope: {e}")
         return None
@@ -165,7 +140,6 @@ def get_threshold_from_csv(csv_path, run_id):
             row = df[df['run_id'] == run_id]
             if not row.empty:
                 threshold = row['steps_to_threshold'].iloc[0]
-                # Check if threshold is not NaN/None
                 if pd.notna(threshold):
                     return threshold
     except Exception as e:
@@ -194,7 +168,6 @@ def load_configs(config_file):
             else:
                 print(f"CSV file {config_file} does not have 'run_id' column")
         else:
-            # Assume text file with one run_id per line
             with open(config_path, 'r') as f:
                 run_ids = [line.strip() for line in f if line.strip()]
     except Exception as e:
@@ -223,13 +196,11 @@ def process_configs(config_file, results_dir, csv_dir=None, env_name=None):
     results = []
     results_path = Path(results_dir)
     
-    # Determine target step based on environment
     if env_name and "worm" in env_name.lower():
         target_step = 2_000_000
     elif env_name and "pyramids" in env_name.lower():
         target_step = 1_000_000
     else:
-        # Try to infer from run_id or use default
         if any("worm" in rid.lower() for rid in run_ids):
             target_step = 2_000_000
         elif any("pyramids" in rid.lower() for rid in run_ids):
@@ -246,22 +217,18 @@ def process_configs(config_file, results_dir, csv_dir=None, env_name=None):
             print(f"Warning: Run directory not found: {run_path}")
             continue
         
-        # Extract training data
         steps, rewards = extract_training_data(run_path)
         if steps is None or rewards is None:
             print(f"Warning: Could not extract training data for {run_id}")
             continue
         
-        # Check if reached threshold
         reached_threshold = False
         if csv_dir:
-            # Try multiple naming conventions
             csv_paths_to_try = [
                 Path(csv_dir) / f"{run_id.lower()}.csv",
                 Path(csv_dir) / f"{run_id}.csv",
                 Path(csv_dir) / f"{run_id.replace('_', '').lower()}.csv",
             ]
-            # Also try searching in CSV directory for any file containing the run_id
             csv_dir_path = Path(csv_dir)
             if csv_dir_path.exists():
                 for csv_file in csv_dir_path.glob("*.csv"):
@@ -280,10 +247,8 @@ def process_configs(config_file, results_dir, csv_dir=None, env_name=None):
                         reached_threshold = True
                         break
         
-        # Compute slope at target step
         slope = compute_slope(steps, rewards)
         
-        # Get performance at target step
         performance = get_performance_at_step(steps, rewards, target_step)
         
         results.append({
@@ -308,7 +273,6 @@ def compute_baseline_metrics(configs_file, results_dir, csv_dir=None):
     print("Processing baseline configs...")
     print("=" * 80)
     
-    # Determine environment from configs
     run_ids = load_configs(configs_file)
     if run_ids:
         if any("worm" in rid.lower() for rid in run_ids):
@@ -320,24 +284,20 @@ def compute_baseline_metrics(configs_file, results_dir, csv_dir=None):
     else:
         env_name = None
     
-    # Process configs
     df = process_configs(configs_file, results_dir, csv_dir, env_name)
     
     if df.empty:
         print("No configs processed successfully")
         return None
     
-    # Filter configs that reached threshold
     df_filtered = df[df['reached_threshold'] == True].copy()
     
     if df_filtered.empty:
         print("Warning: No configs reached threshold. Using all configs.")
         df_filtered = df.copy()
 
-    # find the lowest slope for threshold
     lowest_slope = df_filtered['slope'].sort_values().iloc[0]
 
-    # Compute means for performance
     mean_performance = df_filtered['performance_at_target_step'].mean()
     
     target_step = df_filtered['target_step'].iloc[0]
