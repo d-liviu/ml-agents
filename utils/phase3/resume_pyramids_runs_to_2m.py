@@ -7,6 +7,14 @@ from pathlib import Path
 
 import yaml
 
+# ------------------------------------------------------------
+# HOW TO RUN (PowerShell example)
+# ------------------------------------------------------------
+
+# python resume_pyramids_runs_to_2m.py `
+#   --runs-dir "D:\University\Project 2.1\repo\ml-agents\results\Pyramids_phase3" `
+#   --env-path  "D:\University\Project 2.1\PyramidsBuild\UnityEnvironment.exe" `
+#   --target-steps 2000000
 
 def choose_behavior_name(cfg: dict, explicit: str | None) -> str:
     if explicit:
