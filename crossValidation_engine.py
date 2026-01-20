@@ -10,7 +10,7 @@ from sklearn.feature_selection import VarianceThreshold
 import matplotlib.pyplot as plt
 import numpy as np
 
-df = pd.read_csv("Complete_configs.csv")
+df = pd.read_csv("DataSet_complete.csv")
 
 # feature columns and targets
 feature_cols = [
@@ -23,18 +23,19 @@ feature_cols = [
 ]
 
 target_RQ1 = "final_perf"            
-target_RQ2  = "steps_to_threshold"    
+target_RQ2  = "likely_by_horizon_conservative"    
 
 #PREPROCESSING
 #1.Type casting: 
-numeric_casted= ["learning_rate", "batch_size","nn_arch_depth","cpu_cores_logical","ram_total_gb", target_RQ1, target_RQ2]
+numeric_casted= ["learning_rate", "batch_size","nn_arch_depth","cpu_cores_logical","ram_total_gb", target_RQ1]
 for c in numeric_casted:
     if c in df.columns: 
         df[c]=pd.to_numeric(df[c],errors="coerce")
 
 X = df[feature_cols].copy()
 y_perf = df[target_RQ1].values
-y_reached = (~df[target_RQ2].isna()).astype(int).values
+df[target_RQ2] = df[target_RQ2].astype(int) 
+y_reached = df[target_RQ2].values
 
 # 2. numeric vs categorical features
 numeric_features = [
@@ -98,7 +99,7 @@ def evaluate_both_models(X, y, models, task_name, task_type):
 
         if task_type == "regression":
             r2 = scores["test_r2"]
-            mae = -scores["test_mae"]  # negate because sklearn returns negative MAE
+            mae = -scores["test_mae"] 
             print(f"  R^2 mean = {r2.mean():.3f}, std = {r2.std():.3f}")
             print(f"  MAE mean = {mae.mean():.3f}, std = {mae.std():.3f}")
         else:
@@ -113,11 +114,4 @@ y_RQ1 = y_perf[mask]
 
 evaluate_both_models(X_RQ1, y_RQ1, RQ1_models, "final_perf (RQ1)", "regression")
 evaluate_both_models(X, y_reached, RQ2_models, "is threshold reahced (RQ2)", "classification")
-
-df_plot = df[["env_name", "final_perf"]]
-df_plot.boxplot(column="final_perf", by="env_name", rot=45)
-plt.xlabel("env_name")
-plt.ylabel("final_perf")
-plt.title("environment vs Final Performance")
-plt.show()
 print(np.bincount(y_reached))
