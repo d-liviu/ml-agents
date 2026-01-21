@@ -3,7 +3,7 @@ Run quick, reproducible cross-validation for our two tasks:
 
 * **RQ1 (regression):** predict `final_perf` from run metadata/hyperparameters.
   Models: `LinearRegression`, `RandomForestRegressor`.
-* **RQ2 (classification):** predict `likely_by_horizon_conservative` (0/1).
+* **RQ2 (classification):** predict `threshold_reached` (0/1).
   Models: `LogisticRegression(class_weight="balanced")`, `RandomForestClassifier(class_weight="balanced")`.
 
 ---

@@ -132,7 +132,7 @@ python run_random_sweep.py `
 Run cross-validated baselines for our two prediction tasks:
 
 * **RQ1 (regression):** predict `final_perf` from run metadata/hyperparameters.
-* **RQ2 (classification):** predict `likely_by_horizon_conservative` (0/1).
+* **RQ2 (classification):** predict `threshold_reached` (0/1).
 
 **Input:** `DataSet_complete.csv` (same folder), with columns:
 `env_name, learning_rate, batch_size, nn_arch_depth, cpu_cores_logical, ram_total_gb, final_perf, threshold_reached`.
