@@ -23,7 +23,7 @@ feature_cols = [
 ]
 
 target_RQ1 = "final_perf"            
-target_RQ2  = "likely_by_horizon_conservative"    
+target_RQ2  = "threshold_reached"    
 
 #PREPROCESSING
 #1.Type casting: 
