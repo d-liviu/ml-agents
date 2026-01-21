@@ -75,7 +75,7 @@ Each entry is launched once with its `run_id`.
 
 ---
 
-## 4) Phase 2 — Random config sweep
+## 4) Phase 3 — Random config sweep
 
 **File:** `run_random_sweep.py`
 Generates random PPO configs from a base YAML, saves each to disk, and optionally launches training. 
@@ -135,7 +135,7 @@ Run cross-validated baselines for our two prediction tasks:
 * **RQ2 (classification):** predict `likely_by_horizon_conservative` (0/1).
 
 **Input:** `DataSet_complete.csv` (same folder), with columns:
-`env_name, learning_rate, batch_size, nn_arch_depth, cpu_cores_logical, ram_total_gb, final_perf, likely_by_horizon_conservative`.
+`env_name, learning_rate, batch_size, nn_arch_depth, cpu_cores_logical, ram_total_gb, final_perf, threshold_reached`.
 
 **Deps:** Python 3.10; `pip install pandas numpy scikit-learn`.
 
