@@ -37,11 +37,7 @@ def tflog2pandas(path):
     
     events_file = max(candidates, key=lambda p: p.stat().st_mtime)
     events_file_path = str(events_file.parent)
-    
-    # we split the different files in the directory to get different data from each file
-    # (e.g. timers, algo name, behavior, etc etc)
 
-    # 1. config 
     config_path = path / "configuration.yaml"
     config_data = {}
     if config_path.exists() and HAS_YAML:
@@ -51,7 +47,6 @@ def tflog2pandas(path):
         except Exception as e:
             print(f"Warning: Could not read configuration.yaml: {e}")
     
-    # 2. timer
     timers_path = path / "run_logs" / "timers.json"
     wallclock_seconds = None
     if timers_path.exists():
@@ -68,23 +63,20 @@ def tflog2pandas(path):
         except Exception as e:
             print(f"Warning: Could not read timers.json: {e}")
     
-    # Extract system information 
     cpu_cores = None
-    ram_gb = 24
+    ram_gb = None
     if HAS_PSUTIL:
         cpu_cores = psutil.cpu_count(logical=True)
         ram_gb = psutil.virtual_memory().total / (1024**3)
     else:
         cpu_cores = os.cpu_count()       
     
-    # Extract hyperparameters from config
     learning_rate = None
     batch_size = None
     nn_arch_depth = None
     algo_name = None
     env_name = None
     
-    # Get behavior name (usually first key in behaviors)
     run_id = path.name
     behaviors = config_data.get("behaviors", {})
     if behaviors:
@@ -100,13 +92,11 @@ def tflog2pandas(path):
     if events_dir.name and events_dir.name != path.name:
         env_name = events_dir.name
         
-    # Extract metrics from events file
     try:
         event_acc = EventAccumulator(events_file_path, size_guidance={"scalars": 0})
         event_acc.Reload()
         tags = event_acc.Tags().get("scalars", [])
         
-        # Find episodic reward tag (common names: Environment/Cumulative Reward, Policy/Extrinsic Reward)
         episodic_reward_tag = None
         for tag in tags:
             if "Cumulative Reward" in tag:
@@ -167,7 +157,6 @@ def tflog2pandas(path):
     except Exception as e:
         print(f"Error processing events file: {e}")
         traceback.print_exc()
-        # Return empty DataFrame with correct columns
         data_file_cols = [
             "run_id",
             "wallclock_seconds_total",
@@ -231,19 +220,20 @@ def steps_to_flattening(steps, rewards, window=10, min_rel_improve=0.05):
 if __name__ == "__main__":
 
     RUN_IDS = [
-        "PyrA_0030_s0",
-        "PyrA_0031_s0",
-        "PyrA_0032_s0",
-        "PyrA_0033_s0",
-        "PyrA_0034_s0",
-        "PyrA_0035_s0",
-        "PyrA_0036_s0",
-        "PyrA_0037_s0",
-        "PyrA_0038_s0",
-        "PyrA_0039_s0"
+        "Worm1",
+        "Worm2",
+        "Worm3",
+        "Worm4",
+        "Worm5",
+        "Worm6",
+        "Worm7",
+        "Worm8",
+        "Worm9",
+        "Worm10",
     ]
-    RESULTS_DIR = Path("results/Liviu_Phase3/Pyramids")
-    OUTPUT_DIR = Path("phase3_csvs/pyramids")
+
+    RESULTS_DIR = Path("results")
+    OUTPUT_DIR = Path("phase3_csvs/worm")
 
     print(f"Starting batch processing for {len(RUN_IDS)} runs...")
 
@@ -261,5 +251,3 @@ if __name__ == "__main__":
             print(f"Failed. No data found for {run_id}")
 
 print("\nAll tasks completed.")
-
-
