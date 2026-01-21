@@ -17,10 +17,7 @@ EVENT_PREFIX = "events.out.tfevents"
 
 PHASE2_P25_AUC_ABOVE_BASELINE_2M = 0.46153462451882654
 PHASE2_P25_MAX_REWARD_2M = 0.8358616530895233
-
-# Optional: a more lenient tier (p10) if you ever want "candidate" labels
 PHASE2_P10_AUC_ABOVE_BASELINE_2M = 0.19938589417189354
-
 
 def find_event_dirs(run_root: Path) -> List[Path]:
     event_dirs = set()
@@ -69,7 +66,6 @@ def load_series_from_run(run_root: Path, preferred_tag: str) -> Tuple[str, str, 
         values = np.array([by_step[int(st)] for st in steps], dtype=np.float64)
         return "OK", tag, steps, values, str(d)
 
-    # Debug: list tags from first event dir
     scalar_tags, _ = load_scalars(event_dirs[0])
     debug = " | ".join(scalar_tags[:30])
     return "TAG_NOT_FOUND", "", np.array([]), np.array([]), debug
@@ -147,7 +143,7 @@ def main():
     ap.add_argument("--out", required=True, help="Output CSV with predictions")
 
     ap.add_argument("--tag", default="Environment/Cumulative Reward", help="TensorBoard scalar tag")
-    ap.add_argument("--budget", type=int, default=2_000_000, help="Budget for screening (default 2,000,000)")
+    ap.add_argument("--budget", type=int, default=2_000_000, help="Budget for screening (default 2M)")
     ap.add_argument("--baseline-window", type=int, default=100_000, help="Early baseline window (default 100k)")
 
     ap.add_argument("--use-max", action="store_true",
@@ -177,12 +173,10 @@ def main():
 
         feats = auc_features(steps, values, budget=args.budget, baseline_window=args.baseline_window)
 
-        # Primary rule (STRONG): match Phase-2 passers p25 AUC at 2M
         likely = feats["auc_above_baseline_norm"] >= PHASE2_P25_AUC_ABOVE_BASELINE_2M
         if args.use_max:
             likely = likely and (feats["max_reward_to_budget"] >= PHASE2_P25_MAX_REWARD_2M)
 
-        # Optional 3-tier label
         tier = None
         if args.emit_tier:
             if feats["auc_above_baseline_norm"] >= PHASE2_P25_AUC_ABOVE_BASELINE_2M:

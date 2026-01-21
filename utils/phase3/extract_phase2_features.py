@@ -6,12 +6,12 @@ import numpy as np
 import pandas as pd
 from tensorboard.backend.event_processing import event_accumulator
 
+#This script extracts features from phase 2 training runs for analysis.
+# It processes TensorBoard event files to compute metrics like reward at budget,
+# mean reward in the last window, slope of reward improvement, and AUC metrics.
+
 EVENT_PREFIX = "events.out.tfevents"
 
-
-# ----------------------------
-# TensorBoard loading helpers
-# ----------------------------
 def find_event_dirs(run_root: Path) -> List[Path]:
     event_dirs = set()
     for p in run_root.rglob("*"):
@@ -43,9 +43,7 @@ def pick_tag(scalar_tags: List[str], preferred: str) -> Optional[str]:
         elif "reward" in tl:
             candidates.append(t)
 
-    # Prefer the most specific "cumulative reward" if present
     if candidates:
-        # sort: cumulative+reward first, then shorter names
         candidates.sort(key=lambda x: (("cumulative" not in x.lower()), len(x)))
         return candidates[0]
 
@@ -53,15 +51,11 @@ def pick_tag(scalar_tags: List[str], preferred: str) -> Optional[str]:
 
 
 def load_series_from_run(run_root: Path, preferred_tag: str) -> Tuple[str, str, np.ndarray, np.ndarray, str]:
-    """
-    Returns: (status, tag, steps, values, debug_info)
-    status: OK / NO_EVENT_FILES / TAG_NOT_FOUND
-    """
+
     event_dirs = find_event_dirs(run_root)
     if not event_dirs:
         return "NO_EVENT_FILES", "", np.array([]), np.array([]), ""
 
-    # Try each event dir until we find a usable tag
     for d in event_dirs:
         scalar_tags, ea = load_scalars(d)
         tag = pick_tag(scalar_tags, preferred_tag)
@@ -80,25 +74,18 @@ def load_series_from_run(run_root: Path, preferred_tag: str) -> Tuple[str, str, 
         values = np.array([by_step[int(st)] for st in steps], dtype=np.float64)
         return "OK", tag, steps, values, str(d)
 
-    # If we reach here: tag not found anywhere; return some tags for debugging
-    # (from first event dir)
+ 
     scalar_tags, _ = load_scalars(event_dirs[0])
-    debug = " | ".join(scalar_tags[:30])  # first 30 tags
+    debug = " | ".join(scalar_tags[:30]) 
     return "TAG_NOT_FOUND", "", np.array([]), np.array([]), debug
 
 
-# ----------------------------
-# Feature computations
-# ----------------------------
 def clip_to_budget(steps: np.ndarray, values: np.ndarray, budget: int) -> Tuple[np.ndarray, np.ndarray]:
     mask = steps <= budget
     return steps[mask], values[mask]
 
 
 def reward_at_budget(steps: np.ndarray, values: np.ndarray, budget: int) -> float:
-    """
-    Interpolate reward at exact budget if possible, else last <= budget.
-    """
     if len(steps) == 0:
         return float("nan")
 
@@ -144,7 +131,6 @@ def mean_and_slope_last_window(
     lo = budget - window
     w_steps, w_vals = window_slice(steps_b, vals_b, lo, budget)
 
-    # Fallback if too sparse: last min_points points
     if len(w_steps) < min_points:
         w_steps = steps_b[-min_points:]
         w_vals = vals_b[-min_points:]
@@ -171,10 +157,6 @@ def auc_features(
     budget: int,
     baseline_window: int = 100_000,
 ) -> Dict[str, float]:
-    """
-    AUC up to budget, plus AUC above baseline (normalized by budget so it's in 'reward units').
-    baseline = mean reward in first baseline_window steps (or first available points within it).
-    """
     steps_b, vals_b = clip_to_budget(steps, values, budget)
     if len(steps_b) < 2:
         return {
@@ -186,7 +168,6 @@ def auc_features(
             "n_points": int(len(steps_b)),
         }
 
-    # baseline from early window
     early_hi = min(baseline_window, budget)
     e_steps, e_vals = window_slice(steps_b, vals_b, 0, early_hi)
     if len(e_vals) == 0:
@@ -194,12 +175,11 @@ def auc_features(
     else:
         baseline = float(np.mean(e_vals))
 
-    # Ensure steps are strictly increasing for integration
     s = steps_b.astype(np.float64)
     v = vals_b.astype(np.float64)
 
     auc_raw = float(np.trapz(v, s))  # reward * step
-    auc_raw_norm = auc_raw / float(budget)  # normalize -> average reward over [0,budget]
+    auc_raw_norm = auc_raw / float(budget) 
 
     v_adj = v - baseline
     auc_above = float(np.trapz(v_adj, s))
@@ -214,10 +194,6 @@ def auc_features(
         "n_points": int(len(steps_b)),
     }
 
-
-# ----------------------------
-# Main processing
-# ----------------------------
 def process_folder(folder: Path, env: str, group: str, budget: int, window: int, tag: str) -> pd.DataFrame:
     rows = []
     for run_root in sorted([p for p in folder.iterdir() if p.is_dir()]):
@@ -259,7 +235,7 @@ def main():
     ap.add_argument("--group", default="phase2_passing")
     ap.add_argument("--tag", default="Environment/Cumulative Reward")
 
-    ap.add_argument("--budget", type=int, default=None, help="Override budget (worm default 2M, pyramids default 1M)")
+    ap.add_argument("--budget", type=int, default=None, help="Override budget (defaul 2M)")
     ap.add_argument("--window", type=int, default=300_000, help="Worm: last-window size for mean/slope")
 
     ap.add_argument("--out", required=True, help="Output CSV path")

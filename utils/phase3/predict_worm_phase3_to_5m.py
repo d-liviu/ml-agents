@@ -6,13 +6,12 @@ from pathlib import Path
 
 import pandas as pd
 
+# Run the feature extractor script to produce a temporary CSV of features
+# Then, use those features to predict performance at 5M steps for Worm Phase 3 runs.
+# The prediction is based on mean and slope of reward near 2M steps.
 
 def run_extractor(extract_script: Path, phase3_runs_dir: Path, tmp_csv: Path, tag: str,
                   budget: int, window: int) -> None:
-    """
-    Calls extract_phase2_features.py to generate a features CSV for worm (mean + slope)
-    at the given budget/window.
-    """
     cmd = [
         sys.executable,
         str(extract_script),
@@ -31,27 +30,23 @@ def run_extractor(extract_script: Path, phase3_runs_dir: Path, tmp_csv: Path, ta
 def main():
     ap = argparse.ArgumentParser()
 
-    # Instead of expecting a features CSV, teammates give the Phase 3 results folder:
     ap.add_argument("--phase3-runs-dir", required=True,
                     help="Folder containing Phase 3 run subfolders (e.g. .../results/Worm_phase3)")
 
     ap.add_argument("--out", required=True, help="Output CSV with predictions")
 
-    # Where to find the extractor script
     ap.add_argument("--extract-script", default=None,
                     help="Path to extract_phase2_features.py (default: same folder as this script)")
 
-    # Extraction config
     ap.add_argument("--tag", default="Environment/Cumulative Reward",
                     help="TensorBoard scalar tag to use (default: Environment/Cumulative Reward)")
     ap.add_argument("--budget", type=int, default=2_000_000,
-                    help="Phase 3 budget step (default: 2,000,000)")
+                    help="Phase 3 budget step (default: 2M)")
     ap.add_argument("--window", type=int, default=500_000,
                     help="Window size for mean/slope near budget (default: 500,000)")
     ap.add_argument("--keep-features-csv", action="store_true",
                     help="Keep the intermediate extracted features CSV next to output")
 
-    # Prediction config
     ap.add_argument("--horizon", type=int, default=5_000_000,
                     help="Target step to predict at (default: 5,000,000)")
     ap.add_argument("--threshold", type=float, default=939.047,
@@ -61,7 +56,6 @@ def main():
     ap.add_argument("--require-positive-slope", action="store_true",
                     help="If set: mark UNLIKELY when slope <= 0")
 
-    # Column names produced by extractor
     ap.add_argument("--mean-col", default="mean_last_window",
                     help="Column name for mean performance near budget")
     ap.add_argument("--slope-col", default="slope_last_window_per_1m",
@@ -84,13 +78,11 @@ def main():
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Where to write intermediate features CSV
     if args.keep_features_csv:
         features_csv = out_path.with_suffix("").with_name(out_path.stem + "_features.csv")
     else:
         features_csv = Path(tempfile.gettempdir()) / f"worm_phase3_features_{out_path.stem}.csv"
 
-    # 1) Extract features from Phase 3 runs (worm, 2M, 500k window)
     run_extractor(
         extract_script=extract_script,
         phase3_runs_dir=phase3_runs_dir,
@@ -100,16 +92,13 @@ def main():
         window=args.window,
     )
 
-    # 2) Load extracted features
     df = pd.read_csv(features_csv)
 
-    # Filter to OK runs if present
     if "status" in df.columns:
         df_ok = df[df["status"] == "OK"].copy()
     else:
         df_ok = df.copy()
 
-    # Validate required columns
     for c in [args.mean_col, args.slope_col]:
         if c not in df_ok.columns:
             raise ValueError(f"Missing column '{c}' in extracted CSV. Available: {list(df_ok.columns)}")
@@ -117,13 +106,11 @@ def main():
     mean = df_ok[args.mean_col].astype(float)
     slope_per_1m = df_ok[args.slope_col].astype(float)
 
-    # 3) Predict reward at horizon
     delta_m = (args.horizon - args.budget) / 1_000_000.0
 
     df_ok["pred_reward_at_horizon"] = mean + slope_per_1m * delta_m
     df_ok["pred_reward_at_horizon_conservative"] = mean + (slope_per_1m * args.slowdown) * delta_m
 
-    # 4) Classify likely/unlikely
     if args.require_positive_slope:
         df_ok["likely_by_horizon"] = (slope_per_1m > 0) & (df_ok["pred_reward_at_horizon"] >= args.threshold)
         df_ok["likely_by_horizon_conservative"] = (slope_per_1m > 0) & (
@@ -133,7 +120,6 @@ def main():
         df_ok["likely_by_horizon"] = df_ok["pred_reward_at_horizon"] >= args.threshold
         df_ok["likely_by_horizon_conservative"] = df_ok["pred_reward_at_horizon_conservative"] >= args.threshold
 
-    # 5) Add context columns
     df_ok["budget"] = args.budget
     df_ok["window"] = args.window
     df_ok["horizon"] = args.horizon
@@ -142,7 +128,6 @@ def main():
     df_ok["slowdown_used"] = args.slowdown
     df_ok["features_csv_used"] = str(features_csv)
 
-    # 6) Sort and write output
     df_ok = df_ok.sort_values(
         ["likely_by_horizon_conservative", "pred_reward_at_horizon_conservative"],
         ascending=[False, False],

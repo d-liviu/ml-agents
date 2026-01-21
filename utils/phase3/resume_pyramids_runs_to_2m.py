@@ -7,9 +7,9 @@ from pathlib import Path
 
 import yaml
 
-# ------------------------------------------------------------
+#This script resumes multiple Pyramids Phase 3 runs to reach 2 million steps (they previously were trained to 1M).
+
 # HOW TO RUN (PowerShell example)
-# ------------------------------------------------------------
 
 # python resume_pyramids_runs_to_2m.py `
 #   --runs-dir "D:\University\Project 2.1\repo\ml-agents\results\Pyramids_phase3" `
@@ -22,7 +22,6 @@ def choose_behavior_name(cfg: dict, explicit: str | None) -> str:
     behaviors = cfg.get("behaviors", {})
     if not behaviors:
         raise ValueError("Config has no top-level 'behaviors:' section.")
-    # If only one behavior, use it; otherwise pick the first.
     return next(iter(behaviors.keys()))
 
 
@@ -46,7 +45,6 @@ def find_base_config(run_dir: Path) -> Path | None:
     if len(yamls) == 1:
         return yamls[0]
     if len(yamls) > 1:
-        # pick most recently modified
         yamls.sort(key=lambda p: p.stat().st_mtime, reverse=True)
         return yamls[0]
 
@@ -73,16 +71,13 @@ def make_resume_config(
     current = int(b.get("max_steps", 0) or 0)
     b["max_steps"] = max(current, int(target_steps))
 
-    # Point ML-Agents to the folder that contains run subfolders
-    # so it can find results_root/run_id for --resume.
     cs = cfg["checkpoint_settings"]
     cs["results_dir"] = str(results_root)
     cs["run_id"] = run_id
     cs["resume"] = True
-    cs["force"] = False  # safety
+    cs["force"] = False 
 
     return cfg
-
 
 def run_resume(run_id: str, resume_cfg_path: Path, env_path: Path) -> None:
     cmd = [
