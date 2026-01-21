@@ -31,7 +31,7 @@ Place a CSV named **`DataSet_complete.csv`** in the same directory as the script
 | `cpu_cores_logical`              | numeric (int)                                 |
 | `ram_total_gb`                   | numeric (float)                               |
 | `final_perf`                     | numeric (target for RQ1)                      |
-| `likely_by_horizon_conservative` | **0/1 integer** (target for RQ2)              |
+| `threshold_reached`              | **0/1 integer** (target for RQ2)              |
 
 
 ---
