@@ -118,11 +118,12 @@ python run_random_sweep.py `
   --prefix "PyrA" `
   --n-configs 70 --start-index 20 --count 10 `
   --seeds 0 `
-  --max-steps 1000000
+  --max-steps 2000000
 ```
 
 *For more details, see the dedicated doc: **[run_random_sweep README](run_random_sweep.md)**.*
 
+*Directory with all yaml configurations for phase 3 can be found under `config/YAMLs-PHASE3`*
 
 ---
 
@@ -147,14 +148,12 @@ python crossValidation_engine.py
 The script prints CV metrics (R²/MAE for RQ1; balanced accuracy/F1 for RQ2).
 *For details on preprocessing, models, and customization, see the dedicated doc: **[crossValidation_engine README](crossValidation_engine.md)**.*
 
----
+## 6) Helper Scripts
 
-## 6) Note
+#### Scripts used throughout the project:
 
-For more in depth instructions, most scripts comes with their own individual README
-
-* run_all.py
-* run_random_sweep.py
-* utils/phase3/predict_worm_phase3_to_5m.py
+* unify_csvs.py
+* utils/phase3/add_hyperparams.py
 * utils/phase3/extract_phase2_features.py
-* utils/slope_perf_comparison.md
+* utils/phase3/resume_pyramids_runs_to_2m.py
+* utils/standardize_naming_column.py
