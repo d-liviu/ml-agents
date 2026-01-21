@@ -1,2 +1,0 @@
-run_id,wallclock_seconds_total,algo_name,env_name,learning_rate,batch_size,nn_arch_depth,cpu_cores_logical,ram_total_gb,final_perf,steps_to_threshold,episodic_reward_mean,plateau_reward
-worm_baseline,5167.0,ppo,Worm,0.0003,2024,3,20,23.71471405029297,1146.058837890625,3660000,642.960213084511,939.0479

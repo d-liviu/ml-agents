@@ -1,2 +1,0 @@
-run_id,wallclock_seconds_total,algo_name,env_name,learning_rate,batch_size,nn_arch_depth,cpu_cores_logical,ram_total_gb,final_perf,steps_to_threshold,episodic_reward_mean,plateau_reward
-worm_slowsteady_r2,4339.0,ppo,Worm,0.0002,2024,3,20,23.71471405029297,838.3564453125,,484.658024763365,939.0479
