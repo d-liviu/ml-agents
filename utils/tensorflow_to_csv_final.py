@@ -70,7 +70,7 @@ def tflog2pandas(path):
     
     # Extract system information 
     cpu_cores = None
-    ram_gb = None
+    ram_gb = 24
     if HAS_PSUTIL:
         cpu_cores = psutil.cpu_count(logical=True)
         ram_gb = psutil.virtual_memory().total / (1024**3)
@@ -231,20 +231,19 @@ def steps_to_flattening(steps, rewards, window=10, min_rel_improve=0.05):
 if __name__ == "__main__":
 
     RUN_IDS = [
-        "Worm1",
-        "Worm2",
-        "Worm3",
-        "Worm4",
-        "Worm5",
-        "Worm6",
-        "Worm7",
-        "Worm8",
-        "Worm9",
-        "Worm10",
+        "PyrA_0030_s0",
+        "PyrA_0031_s0",
+        "PyrA_0032_s0",
+        "PyrA_0033_s0",
+        "PyrA_0034_s0",
+        "PyrA_0035_s0",
+        "PyrA_0036_s0",
+        "PyrA_0037_s0",
+        "PyrA_0038_s0",
+        "PyrA_0039_s0"
     ]
-
-    RESULTS_DIR = Path("results")
-    OUTPUT_DIR = Path("phase3_csvs/worm")
+    RESULTS_DIR = Path("results/Liviu_Phase3/Pyramids")
+    OUTPUT_DIR = Path("phase3_csvs/pyramids")
 
     print(f"Starting batch processing for {len(RUN_IDS)} runs...")
 
